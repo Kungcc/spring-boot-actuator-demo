@@ -1,18 +1,22 @@
 package com.kcc.service;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.stereotype.Service;
-
-@Service
 public class BService {
 
-	public Map<String, String> getMap(String key) {
-		Map<String, String> map = new HashMap<>();
-		map.put(LocalDateTime.now().toString(), Long.toString(System.currentTimeMillis()));
-		map.put(key, key);
-		return map;
+	private Map<String, TObject> tObjectMap = new HashMap<>();
+
+	public Map<String, TObject> getTObjectMap(String id, String name) {
+		TObject tObject = tObjectMap.getOrDefault(id, new TObject());
+		if (tObject.getCount() == null) {
+			tObject.setId(id);
+			tObject.setName(name);
+			tObject.setCount(1);
+		} else {
+			tObject.setCount(tObject.getCount() + 1);
+		}
+		tObjectMap.put(id, tObject);
+		return tObjectMap;
 	}
 }
