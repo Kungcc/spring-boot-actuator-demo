@@ -21,7 +21,8 @@ public class RestV1Controller {
 		long t1 = System.currentTimeMillis();
 		Map<String, TObject> result = aService.goFuture();
 		long t2 = System.currentTimeMillis();
-		LOGGER.info("totalTime={}ms", (t2 - t1));
+		LOGGER.info("DEMO1 totalTime={}ms", (t2 - t1));
 		return result;
 	}
+
 }

@@ -1,8 +1,9 @@
 package com.kcc.service;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -26,41 +27,29 @@ public class AService {
 	private BService bService;
 
 	public Map<String, TObject> goFuture() {
-		Map<String, CompletableFuture<Map<String, TObject>>> tObjectMap = new HashMap<>();
-		tObjectMap.put("1", getTObjectMapFuture("1", "First"));
-		tObjectMap.put("2", getTObjectMapFuture("2", "Second"));
-		tObjectMap.put("3", getTObjectMapFuture("3", "Third"));
-		tObjectMap.put("4", getTObjectMapFuture("4", "Forth"));
-		tObjectMap.put("5", getTObjectMapFuture("5", "Fifth"));
-
-		CompletableFuture<Map<String, TObject>> resultFuture = tObjectMap.get("1");
-		for (Entry<String, CompletableFuture<Map<String, TObject>>> entry : tObjectMap.entrySet()) {
-			if ("1".equals(entry.getKey())) {
-				continue;
-			}
-			resultFuture.thenCombine(entry.getValue(), this::combineTObject);
-		}
-
-		Map<String, TObject> result = null;
+		Map<String, TObject> result = new HashMap<>();
+		List<String> tasks = Arrays.asList("1-First", "2-Second", "3-Third", "4-Forth", "5-Fifth");
 		try {
-			result = resultFuture.get(30, TimeUnit.SECONDS);
+			CompletableFuture<?>[] cfs = tasks.stream()
+					// 呼叫web service拿物件
+					.map(task -> getTObjectFuture(task)
+							// 完成後放到map，r是物件，e是exception
+							.whenComplete((r, e) -> result.put(r.getId(), r)))
+					.toArray(CompletableFuture[]::new);
+
+			CompletableFuture.allOf(cfs).get(30, TimeUnit.SECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			LOGGER.error("ErrorMsg={}", e.getMessage(), e);
 			Thread.currentThread().interrupt();
 		}
 		return result;
 	}
 
-	private Map<String, TObject> combineTObject(Map<String, TObject> one, Map<String, TObject> two) {
-		one.putAll(two);
-		return one;
-	}
-
-	private CompletableFuture<Map<String, TObject>> getTObjectMapFuture(String id, String name) {
-		return CompletableFuture.supplyAsync(() -> bService.getTObjectMap(id, name), threadPoolTaskExecutor)
+	private CompletableFuture<TObject> getTObjectFuture(String task) {
+		return CompletableFuture.supplyAsync(() -> bService.getTObject(task), threadPoolTaskExecutor)
 				.exceptionally(ex -> {
 					LOGGER.error("ErrorMsg={}", ex.getMessage(), ex);
 					return null;
 				});
 	}
-
 }

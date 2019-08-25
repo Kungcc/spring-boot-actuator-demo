@@ -6,8 +6,6 @@ public class TObject {
 
 	private String name;
 
-	private Integer count;
-
 	public String getId() {
 		return id;
 	}
@@ -22,14 +20,6 @@ public class TObject {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public Integer getCount() {
-		return count;
-	}
-
-	public void setCount(Integer count) {
-		this.count = count;
 	}
 
 }
