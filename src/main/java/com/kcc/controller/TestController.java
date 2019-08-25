@@ -4,6 +4,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -46,6 +52,22 @@ public class TestController {
 			LOGGER.error("ErrorMsg={}", e.getMessage());
 			return null;
 		}
+	}
+
+	@GetMapping("/getFlight")
+	public String getFlight() {
+		String url = "https://flight.eztravel.com.tw/tickets-roundtrip-tpe-sha/?outbounddate=24%2F10%2F2019&inbounddate=30%2F10%2F2019&adults=1&children=0&direct=true&cabintype=any&dport=&aport=&searchbox=s";
+		try (CloseableHttpClient client = HttpClients.createDefault()) {
+			HttpGet httpGet = new HttpGet(url);
+			HttpResponse response = client.execute(httpGet);
+			String responseString = EntityUtils.toString(response.getEntity());
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+				return responseString;
+			}
+		} catch (IOException e) {
+			LOGGER.error("ErrorMsg={}", e.getMessage());
+		}
+		return "Failed";
 	}
 
 	private void parseValue(Element table, List<String> lines) {
