@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,28 +26,27 @@ public class AService {
 
 	public Map<String, TObject> goFuture() {
 		Map<String, TObject> result = new HashMap<>();
-		List<String> tasks = Arrays.asList("1-First", "2-Second", "3-Third", "4-Forth", "5-Fifth");
+		List<String> requests = Arrays.asList("1-First", "2-Second", "3-Third", "4-Forth", "5-Fifth");
 		try {
-			CompletableFuture<?>[] cfs = tasks.stream()
+			CompletableFuture<?>[] cfs = requests.stream()
 					// 呼叫web service拿物件
-					.map(task -> getTObjectFuture(task)
+					.map(request -> getTObjectFuture(request)
 							// 完成後放到map，r是物件，e是exception
 							.whenComplete((r, e) -> result.put(r.getId(), r)))
 					.toArray(CompletableFuture[]::new);
 
-			CompletableFuture.allOf(cfs).get(30, TimeUnit.SECONDS);
-		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			CompletableFuture.allOf(cfs).get();
+		} catch (InterruptedException | ExecutionException e) {
 			LOGGER.error("ErrorMsg={}", e.getMessage(), e);
 			Thread.currentThread().interrupt();
 		}
 		return result;
 	}
 
-	private CompletableFuture<TObject> getTObjectFuture(String task) {
-		return CompletableFuture.supplyAsync(() -> bService.getTObject(task), threadPoolTaskExecutor)
+	private CompletableFuture<TObject> getTObjectFuture(String request) {
+		return CompletableFuture.supplyAsync(() -> bService.getTObject(request), threadPoolTaskExecutor)
 				.exceptionally(ex -> {
-					LOGGER.error("ErrorMsg={}", ex.getMessage(), ex);
-					return null;
+					throw new DemoServiceException(ex.getMessage());
 				});
 	}
 }
